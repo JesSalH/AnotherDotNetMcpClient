@@ -6,6 +6,20 @@ using ModelContextProtocol.Client;
 
 var builder = Host.CreateApplicationBuilder(args);
 
+// Load .env file if it exists
+var envFile = Path.Combine(Directory.GetCurrentDirectory(), ".env");
+if (File.Exists(envFile))
+{
+    foreach (var line in File.ReadAllLines(envFile))
+    {
+        if (!string.IsNullOrWhiteSpace(line) && line.Contains('=') && !line.StartsWith('#'))
+        {
+            var parts = line.Split('=', 2);
+            Environment.SetEnvironmentVariable(parts[0], parts[1]);
+        }
+    }
+}
+
 builder.Configuration
     .AddEnvironmentVariables();
 
@@ -71,7 +85,7 @@ static void PromptForInput()
     Console.ResetColor();
 }
 
-static (string command, string[] arguments) GetCommandAndArguments(string[] args)
+static (string command, string[] arguments) GetCommandAndArguments(string[] args, string allowedDirectory = null)
 {
     return args switch
     {
@@ -82,11 +96,9 @@ static (string command, string[] arguments) GetCommandAndArguments(string[] args
             => ("node", args),
 
         [var script] when script.EndsWith(".ts")  
-            => ("ts-node", args),
-
-        [var dir] when Directory.Exists(dir) 
+            => ("ts-node", args),        [var dir] when Directory.Exists(dir) 
                        && File.Exists(Path.Combine(dir, "dist", "index.js"))  
-            => ("node", new[] { Path.Combine(dir, "dist", "index.js") }),
+            => ("node", new[] { Path.Combine(dir, "dist", "index.js"), @"D:\Jesus\DAM" }),
 
         [var script] when Directory.Exists(script)
                           || (File.Exists(script) && script.EndsWith(".csproj"))  
